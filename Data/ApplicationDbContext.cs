@@ -1,13 +1,17 @@
-﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+﻿using DotNetCore_Task3.Models;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
-namespace RazorPagesAssignment.Data
+namespace DotNetCore_Task3.Data
 {
     public class ApplicationDbContext : IdentityDbContext
     {
+        public DbSet<ToDo> ToDo { get; set; }
+
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)
         {
+
         }
     }
 }

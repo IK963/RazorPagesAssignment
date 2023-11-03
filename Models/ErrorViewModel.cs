@@ -1,4 +1,4 @@
-namespace RazorPagesAssignment.Models
+namespace DotNetCore_Task3.Models
 {
     public class ErrorViewModel
     {

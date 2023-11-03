@@ -2,7 +2,7 @@
 using Microsoft.EntityFrameworkCore.Migrations;
 using System;
 
-namespace RazorPagesAssignment.Data.Migrations
+namespace DotNetCore_Task3.Data.Migrations
 {
     public partial class CreateIdentitySchema : Migration
     {

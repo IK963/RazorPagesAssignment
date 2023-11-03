@@ -1,6 +1,6 @@
+using DotNetCore_Task3.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using RazorPagesAssignment.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -36,9 +36,19 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapControllerRoute(
-    name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}");
+//app.MapControllerRoute(
+//    name: "default",
+//    pattern: "{controller=Home}/{action=Index}/{id?}");
+app.UseEndpoints(endpoints =>
+{
+    endpoints.MapControllerRoute(
+        name: "default",
+        pattern: "{controller=Home}/{action=Index}/{id?}");
+    endpoints.MapControllerRoute(
+        name: "todo",
+        pattern: "{controller=ToDo}/{action=ViewItemsAsync}/{id?}");
+});
+
 app.MapRazorPages();
 
 app.Run();

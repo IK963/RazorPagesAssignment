@@ -1,9 +1,11 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using RazorPagesAssignment.Models;
+﻿using DotNetCore_Task3.Models;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
 
-namespace RazorPagesAssignment.Controllers
+namespace DotNetCore_Task3.Controllers
 {
+    [Authorize]
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> _logger;
