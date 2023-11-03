@@ -1,4 +1,4 @@
-using DotNetCore_Task3.Data;
+using RazorPagesAssignment.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 

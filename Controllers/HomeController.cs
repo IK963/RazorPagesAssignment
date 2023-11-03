@@ -1,9 +1,9 @@
-﻿using DotNetCore_Task3.Models;
+﻿using RazorPagesAssignment.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
 
-namespace DotNetCore_Task3.Controllers
+namespace RazorPagesAssignment.Controllers
 {
     [Authorize]
     public class HomeController : Controller

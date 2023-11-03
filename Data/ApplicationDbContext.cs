@@ -1,8 +1,8 @@
-﻿using DotNetCore_Task3.Models;
+﻿using RazorPagesAssignment.Models;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
-namespace DotNetCore_Task3.Data
+namespace RazorPagesAssignment.Data
 {
     public class ApplicationDbContext : IdentityDbContext
     {

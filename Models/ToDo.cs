@@ -1,4 +1,4 @@
-﻿namespace DotNetCore_Task3.Models
+﻿namespace RazorPagesAssignment.Models
 {
     public class ToDo
     {

@@ -1,12 +1,12 @@
-﻿using DotNetCore_Task3.Data;
-using DotNetCore_Task3.Models;
+﻿using RazorPagesAssignment.Data;
+using RazorPagesAssignment.Models;
 using ExcelDataReader;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using X.PagedList;
 
-namespace DotNetCore_Task3.Controllers
+namespace RazorPagesAssignment.Controllers
 {
     [Authorize]
     public class ToDoController : Controller
