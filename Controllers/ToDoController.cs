@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using X.PagedList;
-using Microsoft.Data.SqlClient;
 
 namespace RazorPagesAssignment.Controllers
 {
@@ -46,23 +45,30 @@ namespace RazorPagesAssignment.Controllers
 
         public IActionResult Index(string sortOrder, string searchString, int? page)
         {
-            IQueryable<ToDo> todos = _context.ToDo;
-
-            if (!string.IsNullOrEmpty(searchString))
+            try
             {
-                todos = todos.Where(t => t.Title.Contains(searchString));
+                IQueryable<ToDo> todos = _context.ToDo;
+
+                if (!string.IsNullOrEmpty(searchString))
+                {
+                    todos = todos.Where(t => t.Title.Contains(searchString));
+                }
+
+                Func<IQueryable<ToDo>, IOrderedQueryable<ToDo>> selectedSortFunction = GetSelectedSortOrder(sortOrder);
+
+                todos = selectedSortFunction(todos);
+
+                var pageNumber = page ?? 1;
+                var pageSize = 5;
+
+                IPagedList<ToDo> pagedToDos = todos.ToPagedList(pageNumber, pageSize);
+
+                return View(pagedToDos);
             }
-
-            Func<IQueryable<ToDo>, IOrderedQueryable<ToDo>> selectedSortFunction = GetSelectedSortOrder(sortOrder);
-
-            todos = selectedSortFunction(todos);
-
-            var pageNumber = page ?? 1;
-            var pageSize = 5;
-
-            IPagedList<ToDo> pagedToDos = todos.ToPagedList(pageNumber, pageSize);
-
-            return View(pagedToDos);
+            catch
+            {
+                return RedirectToAction("Error", "Home");
+            }
         }
 
         // GET: ToDo/Details/5
