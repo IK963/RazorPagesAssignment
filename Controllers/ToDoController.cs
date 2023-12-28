@@ -5,12 +5,25 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using X.PagedList;
+using Microsoft.Data.SqlClient;
 
 namespace RazorPagesAssignment.Controllers
 {
     [Authorize]
     public class ToDoController : Controller
     {
+        // Dictionary to map column names to sorting functions
+        Dictionary<string, Func<IQueryable<ToDo>, IOrderedQueryable<ToDo>>> sortFunctions = new Dictionary<string, Func<IQueryable<ToDo>, IOrderedQueryable<ToDo>>>
+            {
+                { "Title", todos => todos.OrderBy(t => t.Title) },
+                { "title_desc", todos => todos.OrderByDescending(t => t.Title) },
+                { "IsCompleted", todos => todos.OrderBy(t => t.IsCompleted) },
+                { "completed_desc", todos => todos.OrderByDescending(t => t.IsCompleted) },
+                { "CreatedDate", todos => todos.OrderBy(t => t.CreatedDate) },
+                { "created_desc", todos => todos.OrderByDescending(t => t.CreatedDate) },
+                { "UpdatedDate", todos => todos.OrderBy(t => t.UpdatedDate) },
+                { "updated_desc", todos => todos.OrderByDescending(t => t.UpdatedDate) }
+            };
         private readonly ApplicationDbContext _context;
 
         public ToDoController(ApplicationDbContext context)
@@ -18,54 +31,34 @@ namespace RazorPagesAssignment.Controllers
             _context = context;
         }
 
+        private Func<IQueryable<ToDo>, IOrderedQueryable<ToDo>> GetSelectedSortOrder(string sortOrder)
+        {
+            // Set default sort order if none is provided
+            string defaultSortOrder = "Title";
+            ViewData["CurrentSort"] = sortOrder;
+
+            // Use the selected sorting function or default sorting function
+            if (!string.IsNullOrEmpty(sortOrder))
+                return sortFunctions.ContainsKey(sortOrder) ? sortFunctions[sortOrder] : sortFunctions[defaultSortOrder];
+            else
+                return sortFunctions[defaultSortOrder];
+        }
+
         public IActionResult Index(string sortOrder, string searchString, int? page)
         {
-            ViewData["CurrentSort"] = sortOrder;
-            ViewData["TitleSort"] = String.IsNullOrEmpty(sortOrder) ? "Title" : "title_desc";
-            ViewData["CompletedSort"] = sortOrder == "IsCompleted" ? "IsCompleted" : "completed_desc";
-            ViewData["CreatedSort"] = sortOrder == "CreatedDate" ? "CreatedDate" : "created_desc";
-            ViewData["UpdatedSort"] = sortOrder == "UpdatedDate" ? "UpdatedDate" : "updated_desc";
-
-            var todos = _context.ToDo.ToList();
+            IQueryable<ToDo> todos = _context.ToDo;
 
             if (!string.IsNullOrEmpty(searchString))
             {
-                todos = todos.Where(t => t.Title.Contains(searchString)).ToList();
+                todos = todos.Where(t => t.Title.Contains(searchString));
             }
 
-            switch (sortOrder)
-            {
-                case "Title":
-                    todos = todos.OrderBy(t => t.Title).ToList();
-                    break;
-                case "title_desc":
-                    todos = todos.OrderByDescending(t => t.Title).ToList();
-                    break;
-                case "IsCompleted":
-                    todos = todos.OrderBy(t => t.IsCompleted).ToList();
-                    break;
-                case "completed_desc":
-                    todos = todos.OrderByDescending(t => t.IsCompleted).ToList();
-                    break;
-                case "CreatedDate":
-                    todos = todos.OrderBy(t => t.CreatedDate).ToList();
-                    break;
-                case "created_desc":
-                    todos = todos.OrderByDescending(t => t.CreatedDate).ToList();
-                    break;
-                case "UpdatedDate":
-                    todos = todos.OrderBy(t => t.UpdatedDate).ToList();
-                    break;
-                case "updated_desc":
-                    todos = todos.OrderByDescending(t => t.UpdatedDate).ToList();
-                    break;
-                default:
-                    todos = todos.OrderBy(t => t.Title).ToList();
-                    break;
-            }
+            Func<IQueryable<ToDo>, IOrderedQueryable<ToDo>> selectedSortFunction = GetSelectedSortOrder(sortOrder);
+
+            todos = selectedSortFunction(todos);
 
             var pageNumber = page ?? 1;
-            var pageSize = 5; 
+            var pageSize = 5;
 
             IPagedList<ToDo> pagedToDos = todos.ToPagedList(pageNumber, pageSize);
 
@@ -103,30 +96,21 @@ namespace RazorPagesAssignment.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Id,Title,IsCompleted,CreatedDate,UpdatedDate")] ToDo toDo)
         {
-            if (ModelState.IsValid)
+            try
             {
-                toDo.Id = Guid.NewGuid();
-                _context.Add(toDo);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                if (ModelState.IsValid)
+                {
+                    toDo.Id = Guid.NewGuid();
+                    _context.Add(toDo);
+                    await _context.SaveChangesAsync();
+                    return RedirectToAction(nameof(Index));
+                }
+                return View(toDo);
             }
-            return View(toDo);
-        }
-
-        // GET: ToDo/Edit/5
-        public async Task<IActionResult> Edit(Guid? id)
-        {
-            if (id == null || _context.ToDo == null)
+            catch
             {
-                return NotFound();
+                return RedirectToAction("Error", "Home", new { errorMessage = "Resource is not created due to an error. Please try again! "});
             }
-
-            var toDo = await _context.ToDo.FindAsync(id);
-            if (toDo == null)
-            {
-                return NotFound();
-            }
-            return View(toDo);
         }
 
         // POST: ToDo/Edit/5
@@ -156,29 +140,11 @@ namespace RazorPagesAssignment.Controllers
                     }
                     else
                     {
-                        throw;
+                        return RedirectToAction("Error", "Home", new { errorMessage = "Resource could not be updated due to an error. Please try again! " });
                     }
                 }
                 return RedirectToAction(nameof(Index));
             }
-            return View(toDo);
-        }
-
-        // GET: ToDo/Delete/5
-        public async Task<IActionResult> Delete(Guid? id)
-        {
-            if (id == null || _context.ToDo == null)
-            {
-                return NotFound();
-            }
-
-            var toDo = await _context.ToDo
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (toDo == null)
-            {
-                return NotFound();
-            }
-
             return View(toDo);
         }
 
@@ -187,18 +153,24 @@ namespace RazorPagesAssignment.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(Guid id)
         {
-            if (_context.ToDo == null)
+            try
             {
-                return Problem("Entity set 'ApplicationDbContext.ToDo'  is null.");
+                if (_context.ToDo == null)
+                {
+                    return Problem("Entity set 'ApplicationDbContext.ToDo'  is null.");
+                }
+                var toDo = await _context.ToDo.FindAsync(id);
+                if (toDo != null)
+                {
+                    _context.ToDo.Remove(toDo);
+                }
+
+                await _context.SaveChangesAsync();
+                return RedirectToAction(nameof(Index));
             }
-            var toDo = await _context.ToDo.FindAsync(id);
-            if (toDo != null)
-            {
-                _context.ToDo.Remove(toDo);
+            catch {
+                return RedirectToAction("Error", "Home", new { errorMessage = "Resource could not be deleted due to an error. Please try again! " });
             }
-            
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
         }
 
         private bool ToDoExists(Guid id)
@@ -211,59 +183,65 @@ namespace RazorPagesAssignment.Controllers
         {
             if (file == null || file.Length == 0)
             {
-                return RedirectToAction("/Home/Error"); // Replace with your error handling logic
+                return RedirectToAction("Error", "Home", new { errorMessage = "No file is selected. Please select a file first. " });
             }
-
-            using (var memoryStream = new MemoryStream())
+            try
             {
-                await file.CopyToAsync(memoryStream);
-                memoryStream.Position = 0;
-                bool isFirstRow = false;
-
-                using (var reader = GetDataReader(memoryStream, file.FileName))
+                using (var memoryStream = new MemoryStream())
                 {
-                    while (reader.Read()) // Read the content of the file
+                    await file.CopyToAsync(memoryStream);
+                    memoryStream.Position = 0;
+                    bool isFirstRow = false;
+
+                    using (var reader = GetDataReader(memoryStream, file.FileName))
                     {
-                        if (!isFirstRow)
+                        while (reader.Read()) // Read the content of the file
                         {
-                            isFirstRow = true;
-                            continue; // Skip the first row
-                        }
+                            if (!isFirstRow)
+                            {
+                                isFirstRow = true;
+                                continue; // Skip the first row
+                            }
 
-                        ToDo toDoItem = null;
-                        if (Path.GetExtension(file.FileName).Equals(".csv", StringComparison.OrdinalIgnoreCase))
-                        {
-                            var values = reader.GetString(0)?.Split(',');
+                            ToDo toDoItem = null;
+                            if (Path.GetExtension(file.FileName).Equals(".csv", StringComparison.OrdinalIgnoreCase))
+                            {
+                                var values = reader.GetString(0)?.Split(',');
 
-                            if (values.Length > 0)
+                                if (values.Length > 0)
+                                {
+                                    toDoItem = new ToDo
+                                    {
+                                        Title = values[0],
+                                        IsCompleted = bool.Parse(values[1]),
+                                        CreatedDate = DateTime.Parse(values[2]),
+                                        UpdatedDate = DateTime.Parse(values[3])
+                                    };
+                                }
+                            }
+                            else if (Path.GetExtension(file.FileName).Equals(".xlsx", StringComparison.OrdinalIgnoreCase))
                             {
                                 toDoItem = new ToDo
                                 {
-                                    Title = values[0], 
-                                    IsCompleted = bool.Parse(values[1]), 
-                                    CreatedDate = DateTime.Parse(values[2]), 
-                                    UpdatedDate = DateTime.Parse(values[3]) 
+                                    Title = reader.GetString(0),
+                                    IsCompleted = reader.GetBoolean(1),
+                                    CreatedDate = reader.GetDateTime(2),
+                                    UpdatedDate = reader.GetDateTime(3)
                                 };
                             }
+                            _context.ToDo.Add(toDoItem);
                         }
-                        else if (Path.GetExtension(file.FileName).Equals(".xlsx", StringComparison.OrdinalIgnoreCase))
-                        {
-                            toDoItem = new ToDo
-                            {
-                                Title = reader.GetString(0), 
-                                IsCompleted = reader.GetBoolean(1), 
-                                CreatedDate = reader.GetDateTime(2), 
-                                UpdatedDate = reader.GetDateTime(3) 
-                            };
-                        }
-                        _context.ToDo.Add(toDoItem);
                     }
                 }
+
+                _context.SaveChanges(); // Save changes to the database
+
+                return RedirectToAction("Index");
             }
-
-            _context.SaveChanges(); // Save changes to the database
-
-            return RedirectToAction("Index");
+            catch
+            {
+                return RedirectToAction("Error", "Home", new { errorMessage = "File could not be uploaded due to an error. Please try again! " });
+            }
         }
 
         private IExcelDataReader GetDataReader(Stream stream, string fileName)
