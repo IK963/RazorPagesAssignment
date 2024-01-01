@@ -2,7 +2,27 @@
     ViewData["Title"] = "Home Page";
 }
 
+<style>
+    .upload-button {
+        border: 1px solid #000;
+        padding: 5px 10px;
+        display: inline-block;
+        align-content:center;
+    }
+</style>
+
 <div class="text-center">
     <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://docs.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+    <p>Go to Items Page to View and manage the list of Items.</p>
 </div>
+<br />
+<br />
+
+@using (Html.BeginForm("Upload", "ToDo", FormMethod.Post, new { enctype = "multipart/form-data" }))
+{
+    <h5>Select file to upload list of items: </h5>
+    <div class="upload-button">
+        <input type="file" name="file" />
+        <button type="submit">Upload</button>
+    </div>
+}

@@ -1,0 +1,68 @@
+﻿@model X.PagedList.IPagedList<RazorPagesAssignment.Models.ToDo>
+@using X.PagedList.Mvc.Core
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>Items</h1>
+
+<p>
+    <a asp-action="Create">Create New</a>
+</p>
+
+@using (Html.BeginForm("Index", "ToDo", FormMethod.Get))
+{
+    <p>
+        Find by title: @Html.TextBox("SearchString")
+        <input type="submit" value="Search" />
+    </p>
+}
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                <a asp-action="Index" asp-route-sortOrder="@("Title".Equals(ViewData["CurrentSort"]) ? "title_desc" : "Title")">@Html.DisplayNameFor(model => model[0].Title)</a>
+            </th>
+            <th>
+                <a asp-action="Index" asp-route-sortOrder="@("IsCompleted".Equals(ViewData["CurrentSort"]) ? "completed_desc" : "IsCompleted")">@Html.DisplayNameFor(model => model[0].IsCompleted)</a>
+            </th>
+            <th>
+                <a asp-action="Index" asp-route-sortOrder="@("CreatedDate".Equals(ViewData["CurrentSort"]) ? "created_desc" : "CreatedDate")">@Html.DisplayNameFor(model => model[0].CreatedDate)</a>
+            </th>
+            <th>
+                <a asp-action="Index" asp-route-sortOrder="@("UpdatedDate".Equals(ViewData["CurrentSort"]) ? "updated_desc" : "UpdatedDate")">@Html.DisplayNameFor(model => model[0].UpdatedDate)</a>
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+    @foreach (var item in Model) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.Title)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.IsCompleted)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.CreatedDate)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.UpdatedDate)
+            </td>
+            <td>
+                <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
+                <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
+                <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>
+
+<div>
+    Page @(Model.PageCount < Model.PageNumber ? 0 : Model.PageNumber) of @Model.PageCount
+    @Html.PagedListPager(Model, page => Url.Action("Index", new { page }))
+</div>
